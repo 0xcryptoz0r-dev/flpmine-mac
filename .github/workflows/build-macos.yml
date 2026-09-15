@@ -1,0 +1,43 @@
+name: Build FlpMine for macOS
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: macos-13        # Mac Intel
+            arch_label: intel
+          - os: macos-14        # Mac Apple Silicon (M1/M2/M3...)
+            arch_label: apple-silicon
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Resoudre les dependances
+        run: go mod tidy
+
+      - name: Installer l'outil fyne
+        run: go install fyne.io/fyne/v2/cmd/fyne@latest
+
+      - name: Compiler l'application macOS
+        working-directory: cmd/flpmine
+        run: |
+          $(go env GOPATH)/bin/fyne package -os darwin -icon icon.png -name FlpMine
+
+      - name: Zipper le resultat
+        working-directory: cmd/flpmine
+        run: ditto -c -k --sequesterRsrc --keepParent FlpMine.app FlpMine-${{ matrix.arch_label }}.zip
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: FlpMine-${{ matrix.arch_label }}
+          path: cmd/flpmine/FlpMine-${{ matrix.arch_label }}.zip
