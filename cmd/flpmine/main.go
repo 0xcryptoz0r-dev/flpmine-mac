@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io"
+	"net/url"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -16,7 +17,6 @@ import (
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/data/binding"
 	"fyne.io/fyne/v2/dialog"
-	"fyne.io/fyne/v2/storage"
 	"fyne.io/fyne/v2/widget"
 
 	"flpmine/audio"
@@ -31,7 +31,6 @@ var drumTags = map[string]bool{
 	"shaker": true, "perc": true, "fill": true,
 }
 
-// fileRow represente une ligne de la liste de statut.
 type fileRow struct {
 	path   string
 	status string
@@ -96,7 +95,7 @@ func main() {
 		if folder == "" {
 			return
 		}
-		u := storage.NewFileURI(folder)
+		u := &url.URL{Scheme: "file", Path: folder}
 		a.OpenURL(u)
 	})
 
@@ -138,7 +137,6 @@ func main() {
 	content := container.NewBorder(topBar, nil, nil, nil, split)
 	win.SetContent(content)
 
-	// Glisser-deposer de fichiers .flp directement sur la fenetre.
 	win.SetOnDropped(func(pos fyne.Position, uris []fyne.URI) {
 		var flpFiles []string
 		for _, u := range uris {
